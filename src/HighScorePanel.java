@@ -149,7 +149,7 @@ public class HighScorePanel extends JPanel {
 			total += x.getName() + "\n";
 			total += x.getScore() + "\n";
 			total = "\"" + total + "\"";
-			connection = new URL(URI + "/StoreScore " + total).openConnection();
+			connection = new URL(URI + "/DeathLab/bin/StoreScore " + total).openConnection();
 		}
 		catch(Exception e) {e.printStackTrace();}
 		

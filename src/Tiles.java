@@ -41,7 +41,14 @@ public class Tiles {  //static resource. Not really an object type thing. Doesnt
 			tileNames.add(name);
 		
 		try{
-			TileSetImage = ImageIO.read(new File( "tileset.png"));
+			/*
+			 * Okay. This is blowing my fucking mind how could this possibly work
+			 */
+			InputStream configStream = Tiles.class.getResourceAsStream("tileset.png");  
+			System.out.println(configStream == null);
+			TileSetImage = ImageIO.read(configStream);
+			
+			//TileSetImage = ImageIO.read(new File(PATH + "tileset.png"));
 			tiles = new BufferedImage[256];
 			for(int x = 0; x < 16; x++){
 				for(int y = 0; y < 16; y++){
