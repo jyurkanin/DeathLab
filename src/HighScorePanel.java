@@ -1,16 +1,13 @@
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.PrintWriter;
+import java.awt.*;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 
 import javax.swing.JPanel;
 
 
 public class HighScorePanel extends JPanel {
+	public static final String URI = "98.215.7.147";
 	private static final long serialVersionUID = -2919691051370747700L;
 	private Tile[][] tileMap;
 	private int mapHeight;
@@ -53,44 +50,37 @@ public class HighScorePanel extends JPanel {
 	private ArrayList<HighScore> getHighScores() 
 	{
 		try {
-			FileReader reader = new FileReader("highscores.txt");
+			FileReader reader = new FileReader(URI+"/highscores.txt");
 			Scanner scan = new Scanner(reader);
 			ArrayList<HighScore> highscores = new ArrayList<HighScore>();
-			while(scan.hasNext())
-			{
+			while(scan.hasNext()){
 				System.out.println("reading");
 				String name = scan.next();
-				if(scan.hasNext())
-				{
-				int score = Integer.parseInt(scan.next());
-				HighScore temp = new HighScore(name, score);
-				highscores.add(temp);
+				if(scan.hasNext()){
+					int score = Integer.parseInt(scan.next());
+					HighScore temp = new HighScore(name, score);
+					highscores.add(temp);
 				}
 			}
 			//selection sort ftw
-			for(int i=0; i < highscores.size()-1; i++)
-			{
-			int minindex = i;
-			HighScore temp;
+			for(int i=0; i < highscores.size()-1; i++){
+				int minindex = i;
+				HighScore temp;
 			
-				for(int c = i; c<highscores.size()-1; c++)
-				{
-					if(highscores.get(c).getScore()> highscores.get(minindex).getScore())
-					{
+				for(int c = i; c<highscores.size()-1; c++){
+					if(highscores.get(c).getScore() > highscores.get(minindex).getScore()){
 						minindex = c;
 					}
-					
 				}
-			if(minindex!=i)
-					{
-						temp = highscores.get(i);
-						highscores.set(i,highscores.get(minindex));
-						highscores.set(minindex, temp);
-					}
+				if(minindex!=i){
+					temp = highscores.get(i);
+					highscores.set(i,highscores.get(minindex));
+					highscores.set(minindex, temp);
+				}
 			}
 			while(highscores.size()>11)
 				highscores.remove(11);
-			
+			scan.close();
 			return highscores;
 	
 		} catch (FileNotFoundException e) {
@@ -139,7 +129,7 @@ public class HighScorePanel extends JPanel {
 	public int findSpot(int score)
 	{
 		ArrayList<HighScore> scores = getHighScores();
-		for(int i = 0; i < scores.size() ;i++)
+		for(int i = 0; i < scores.size(); i++)
 			if(score > scores.get(i).getScore())
 				return i;
 		return -1;
@@ -147,20 +137,37 @@ public class HighScorePanel extends JPanel {
 	//adds highscore
 	public void addHighScore(HighScore x)
 	{
+		String total = "";
+		URLConnection connection;
+		BufferedReader reader;
+		
+		try{
+			connection = new URL(URI + "/highscores.txt").openConnection();
+			reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			while(reader.ready())
+				total += reader.readLine() + "\n";
+			total += x.getName() + "\n";
+			total += x.getScore() + "\n";
+			total = "\"" + total + "\"";
+			connection = new URL(URI + "/StoreScore " + total).openConnection();
+		}
+		catch(Exception e) {e.printStackTrace();}
+		
+		/* this is for the client only version
 		try {
 			ArrayList<HighScore> temp =getHighScores();
 			PrintWriter print = new PrintWriter("highscores.txt");
-			for(HighScore h : temp)
-			{
-			print.println(h.getName());
-			print.println(Integer.toString(h.getScore()));
+			for(HighScore h : temp){
+				print.println(h.getName());
+				print.println(Integer.toString(h.getScore()));
 			}
 			print.println(x.getName());
 			print.println(Integer.toString((x.getScore())));
 			print.close();
-		} catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e){
 			
 		}
+		*/
 	}
 	public Dimension getDimension()
 	{
