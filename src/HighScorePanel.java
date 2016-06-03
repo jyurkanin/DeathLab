@@ -7,7 +7,7 @@ import javax.swing.JPanel;
 
 
 public class HighScorePanel extends JPanel {
-	public static final String URI = "98.215.7.147";
+	public static final String URI = "http://98.215.7.147";
 	private static final long serialVersionUID = -2919691051370747700L;
 	private Tile[][] tileMap;
 	private int mapHeight;
@@ -50,7 +50,8 @@ public class HighScorePanel extends JPanel {
 	private ArrayList<HighScore> getHighScores() 
 	{
 		try {
-			FileReader reader = new FileReader(URI+"/highscores.txt");
+			URLConnection connection = new URL(URI + "/DeathLab/highscores.txt").openConnection();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			Scanner scan = new Scanner(reader);
 			ArrayList<HighScore> highscores = new ArrayList<HighScore>();
 			while(scan.hasNext()){
@@ -83,7 +84,9 @@ public class HighScorePanel extends JPanel {
 			scan.close();
 			return highscores;
 	
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
 			return null;
 		}
 		
@@ -142,7 +145,7 @@ public class HighScorePanel extends JPanel {
 		BufferedReader reader;
 		
 		try{
-			connection = new URL(URI + "/highscores.txt").openConnection();
+			connection = new URL(URI + "/DeathLab/highscores.txt").openConnection();
 			reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			while(reader.ready())
 				total += reader.readLine() + "\n";
