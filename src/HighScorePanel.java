@@ -50,9 +50,9 @@ public class HighScorePanel extends JPanel {
 	private ArrayList<HighScore> getHighScores() 
 	{
 		try {
-			URLConnection connection = new URL(URI + "/DeathLab/highscores.txt").openConnection();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			Scanner scan = new Scanner(reader);
+			//URLConnection connection = new URL(URI + "/DeathLab/highscores.txt").openConnection();
+			//BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			Scanner scan = new Scanner(new InputStreamReader(new FileInputStream("highscores.txt")));
 			ArrayList<HighScore> highscores = new ArrayList<HighScore>();
 			while(scan.hasNext()){
 				System.out.println("reading");
@@ -84,9 +84,10 @@ public class HighScorePanel extends JPanel {
 			scan.close();
 			return highscores;
 	
-		} catch (Exception e) {
+		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(0);
+			try {PrintWriter printWriter = new PrintWriter("highscores.txt"); printWriter.close();}
+			catch (FileNotFoundException e1) {e1.printStackTrace();}
 			return null;
 		}
 		
@@ -140,25 +141,8 @@ public class HighScorePanel extends JPanel {
 	//adds highscore
 	public void addHighScore(HighScore x)
 	{
-		String total = "";
-		URLConnection connection;
-		BufferedReader reader;
-		
 		try{
-			connection = new URL(URI + "/DeathLab/highscores.txt").openConnection();
-			reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			while(reader.ready())
-				total += reader.readLine() + "\n";
-			total += x.getName() + "\n";
-			total += x.getScore() + "\n";
-			total = "\"" + total + "\"";
-			connection = new URL(URI + "/DeathLab/bin/StoreScore " + total).openConnection();
-		}
-		catch(Exception e) {e.printStackTrace();}
-		
-		/* this is for the client only version
-		try {
-			ArrayList<HighScore> temp =getHighScores();
+			ArrayList<HighScore> temp = getHighScores();
 			PrintWriter print = new PrintWriter("highscores.txt");
 			for(HighScore h : temp){
 				print.println(h.getName());
@@ -167,10 +151,8 @@ public class HighScorePanel extends JPanel {
 			print.println(x.getName());
 			print.println(Integer.toString((x.getScore())));
 			print.close();
-		} catch (FileNotFoundException e){
-			
-		}
-		*/
+		}catch (FileNotFoundException f){}
+		
 	}
 	public Dimension getDimension()
 	{
