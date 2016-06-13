@@ -11,8 +11,8 @@ public class Player extends Entity{
 		super(e, t, true);
 		score = 0;
 		kills = 0;
-		health = 1;
-		hunger = 100;
+		health = 100;
+		hunger = 0;
 		generateInventory();
 	}	
 	public void generateInventory(){
