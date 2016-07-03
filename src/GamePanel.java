@@ -8,6 +8,7 @@ public class GamePanel extends JPanel{
 	private static final long serialVersionUID = 5309705996895440041L;
 	Tile[][] tileMap; //this holds the tiles of the current game.
 	private Tile[][] oldTileMap; //this holds the tiles the way they looked the last time they were seen by the player.
+	private ArrayList<Bolt> bolts; //this holds bolts.
 	private ArrayList<Entity> entities; //these get painted last.
 	private ArrayList<Tile> currentlyVisibleTiles;
 	int mapHeight;  //these measure tileMap. so 1/16th of pixels.
@@ -21,9 +22,13 @@ public class GamePanel extends JPanel{
 		mapWidth =  d.width/16;
 		tileMap = new Tile[mapWidth][mapHeight];
 		oldTileMap = new Tile[mapWidth][mapHeight];
+		//bolts = new ArrayList<Bolt>(); //I better not get a nullpointer exception.
 		entities = new ArrayList<Entity>();
 		currentlyVisibleTiles = new ArrayList<Tile>();
 		clear();
+	}
+	public void setBolts(ArrayList<Bolt> b){
+		bolts = b;
 	}
 	public void displayString(int x, int y, String string){
 		String tempName;
@@ -100,6 +105,15 @@ public class GamePanel extends JPanel{
 			if((entity.IS_USER || tile.getHasBeenSeen()) && isPointInBounds(point))
 				graphics.drawImage(temp, null, 16*point.x, 16*point.y);
 		}
+		for(Bolt b : bolts){
+			point = (Point) b.getPoint().clone();
+			tile = tileMap[point.x][point.y];
+			if(tile.getHasBeenSeen() && isPointInBounds(point)){
+				point.translate((width/2) - tileMapOffsetX, (height/2) - tileMapOffsetY);
+				graphics.drawImage(b.getTile().getImage(),  null, 16*point.x, 16*point.y);
+			}
+		}
+		
 		currentlyVisibleTiles.clear();
 	}
 	public void setCurrentlyVisibleTiles(ArrayList<Tile> los){

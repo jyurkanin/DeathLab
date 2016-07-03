@@ -10,7 +10,8 @@ public class Enemy extends Entity{
 	private int wait;
 	final static int InitialSightDistance = 4; //cyborg zombies are near sighted. this is the minimum search distance for the path algorithm.
 	int sightDistance;
-	int AILevel; 
+	int AILevel;
+	int fireCounter;
 	boolean wasVisible;
 	/* AILevel = the difficulty of the AI starting at 1.
 	 * with each level increase they move faster.
@@ -35,9 +36,10 @@ public class Enemy extends Entity{
 		count = e.random.nextInt(1000); //this is so that all the enemeis dont just move a that the same time.
 		countMult = 1;
 		wait = 0;
-		AILevel = 1+(e.getPlayer().score / 10);
+		AILevel = 5+(e.getPlayer().score / 10);
 		sightDistance = InitialSightDistance;
 		wasVisible = false;
+		fireCounter = 0;
 		
 		if(AILevel >= 15 && engine.random.nextInt(100) < 33){
 			generateInventory();
@@ -57,32 +59,46 @@ public class Enemy extends Entity{
 		sightDistance = InitialSightDistance + AILevel-3;
 		updateLineOfSight();
 		Direction decision = null; 
+		Point temp;
+		boolean tracking = false;
 		//I dont think their is a case in which decision stays null because at least one of the state conditions will always be true.
 		//int state; //state is indeterminate at this point.
 		if(!isPlayerVisible()){// state = 1;
 			decision = randomWalk();
 			wasVisible = false;
 		}   //at level 15 they can use path finding to locate player even if they cant see the player. Xray vision.
-		else if((isPlayerVisible() || AILevel>= 15) && !isPlayerInRange() && AILevel >= 3){//state = 2;
+		else if((isPlayerVisible() || AILevel >= 15) && !isPlayerInRange() && AILevel >= 3){//state = 2;
 			if(!wasVisible){
 				engine.statusPanel.addMessage(Responses.getPlayerDetectedMsg());
 				wasVisible = true;
 			}
 			decision = trackEnemy();
+			tracking = true;
 		}
 		else if(isPlayerVisible() &&  isPlayerInRange()){//state = 3;
 			if(AILevel >= 10 && ((AILevel-5)*5 >= 50? engine.random.nextInt(100) < 50: engine.random.nextInt(100) < ((AILevel-5)*5)))
 				decision = dodge();
 			else{
 				decision = Direction.NONE;
-				System.out.println("ATTTACK");
 				attack(engine.getPlayer());
 			}
 		}
 		
-		if(engine.canEntityTravel(getPosition(), decision)){
+		
+		if(isPlayerInLine() && fireCounter == (10/AILevel) && tracking){
+			temp = (Point) point.clone();
+			if(decision == Direction.NORTH)      temp.y--;
+			else if(decision == Direction.EAST)  temp.x++;
+			else if(decision == Direction.SOUTH) temp.y++;
+			else if(decision == Direction.WEST)  temp.x--;
+			if(!engine.hasBolt(temp)) fireBolt(decision);
+			fireCounter = 0;
+			System.out.println("Enemy fire");
+		}
+		else if(engine.canEntityTravel(getPosition(), decision)){
 			move(decision);
 		}
+		fireCounter++;
 	}
 	/*
 	 * this moves perpendicular to the target.
@@ -164,11 +180,18 @@ public class Enemy extends Entity{
 				  new Point(point.x, point.y-1).equals(playerPoint) ||
 				  new Point(point.x, point.y+1).equals(playerPoint);
 	}
+	/*
+	 * can the player be hit by an arrow?
+	 */
+	private boolean isPlayerInLine(){
+		return engine.getPlayer().getPosition().x == point.x || engine.getPlayer().getPosition().y == point.y;
+	}
 	public void generateInventory(){
 		equipArmor(new Armor("SUIT"));
-		equipWeapon((Weapon) new MeleeWeapon("LONGSWORD"));
+		equipMeleeWeapon( new MeleeWeapon("LONGSWORD"));
+		equipRangedWeapon( new RangedWeapon("CROSSBOW"));
 		
 		inventory.add(getEquippedArmor());
-		inventory.add(getEquippedWeapon());
+		inventory.add(getEquippedMeleeWeapon());
 	}
 }

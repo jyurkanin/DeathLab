@@ -13,7 +13,8 @@ public class Entity {
 	public GameEngine engine;
 	ArrayList<Item> inventory;
 	private Armor equippedArmor;
-	private Weapon equippedWeapon;
+	private MeleeWeapon equippedMeleeWeapon;
+	private RangedWeapon equippedRangedWeapon;
 	public Entity(GameEngine e, Tile t, boolean b){
 		engine = e;
 		IS_USER = b;
@@ -23,7 +24,7 @@ public class Entity {
 		hunger = 0;
 		inventory = new ArrayList<Item>();
 		equippedArmor = null;
-		equippedWeapon = null;
+		equippedMeleeWeapon = null;
 	}
 	/*
 	 * This returns a true or false if it kills the opponent
@@ -44,9 +45,26 @@ public class Entity {
 		}
 		return false; //false as in not dead.
 	}
+	public void fireBolt(char d){
+		Direction aim = null;
+		if(d == '8') aim = Direction.NORTH;
+		else if(d == '4') aim = Direction.WEST;
+		else if(d == '5') aim = Direction.SOUTH;
+		else if(d == '6') aim = Direction.EAST;
+		fireBolt(aim);
+	}
+	public void fireBolt(Direction aim){
+		Bolt bolt = new Bolt(aim, getRangedDamage());
+		bolt.setPoint((Point) point.clone());
+		engine.addBolt(bolt); //let the engine figure it out.
+	}
 	public int getWeaponDamage(){
-		if(equippedWeapon == null) return 1;
-		else return equippedWeapon.damage;
+		if(equippedMeleeWeapon == null) return 1;
+		else return equippedMeleeWeapon.damage;
+	}
+	public int getRangedDamage(){
+		if(equippedRangedWeapon == null) return 1;
+		else return equippedRangedWeapon.damage;
 	}
 	public int getArmorResistance(){
 		if(equippedArmor == null) return 1;
@@ -64,17 +82,31 @@ public class Entity {
 	public Armor getEquippedArmor(){
 		return equippedArmor;
 	}
-	public void equipWeapon(Weapon a){
-		equippedWeapon = a;
-		equippedWeapon.equip();
+	public void equipRangedWeapon(RangedWeapon a){
+		equippedRangedWeapon = a;
+		equippedRangedWeapon.equip();
 	}
-	public Weapon unequipWeapon(){
-		Weapon temp = equippedWeapon;
-		equippedWeapon = null;
+	public RangedWeapon unequipRangedWeapon(){
+		RangedWeapon temp = equippedRangedWeapon;
+		equippedRangedWeapon = null;
+		temp.unequip();
 		return temp;
 	}
-	public Weapon getEquippedWeapon(){
-		return equippedWeapon;
+	public RangedWeapon getEquippedRangedWeapon(){
+		return equippedRangedWeapon;
+	}
+	public void equipMeleeWeapon(MeleeWeapon a){
+		equippedMeleeWeapon = a;
+		equippedMeleeWeapon.equip();
+	}
+	public MeleeWeapon unequipMeleeWeapon(){
+		MeleeWeapon temp = equippedMeleeWeapon;
+		equippedMeleeWeapon = null;
+		temp.unequip();
+		return temp;
+	}
+	public MeleeWeapon getEquippedMeleeWeapon(){
+		return equippedMeleeWeapon;
 	}
 	public void setPosition(Point p){
 		point = (Point) p.clone();

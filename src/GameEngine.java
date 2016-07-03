@@ -13,7 +13,9 @@ public class GameEngine {
 	ArrayList<Item> items;
 	ArrayList<Point> wallPoints;
 	ArrayList<Point> walkingPoints;
+	ArrayList<Bolt> bolts;
 	int height, width;
+	int frameCount;
 	GameBoard gameBoard;
 	GamePanel gamePanel;
 	StatusPanel statusPanel;
@@ -28,7 +30,7 @@ public class GameEngine {
 	public int level; //which floor we are on.
 	public GameEngine(){
 		startingPoint = new Point();
-		//player = new Player(this, Tiles.tTile("CIVILIAN", Color.RED), true);
+		//player = new Player(this, Tiles.getTile("CIVILIAN", Color.RED), true);
 		eventBuffer = new ArrayList<Character>();
 		user = new KeyboardListener(eventBuffer);
 		player = new Player(this, Tiles.getTile("CIVILIAN", Color.RED));
@@ -39,6 +41,8 @@ public class GameEngine {
 		tileMap = gamePanel.getTileMap();
 		wallPoints = new ArrayList<Point>();
 		walkingPoints = new ArrayList<Point>();
+		bolts = new ArrayList<Bolt>();
+		gamePanel.setBolts(bolts);
 		items = new ArrayList<Item>();
 		enemies = new ArrayList<Enemy>();
 		level = 1;
@@ -93,6 +97,7 @@ public class GameEngine {
 		gamePanel.addEntity(player);
 		gamePanel.setCurrentlyVisibleTiles(getLineOfSight(player, player.sightDistance));
 		gameBoard.setVisible(true);
+		frameCount = 0;
 		try{Thread.sleep(1000);}
 		catch(Exception e){}
 	}
@@ -175,8 +180,8 @@ public class GameEngine {
 					}
 				}
 			}
-			quit |= count > 10; //this just prevents infinite loops from forming in strange circumstances. DOnt worry about it basically.
-			//if(count > 10) System.out.println("I cant Even Imagine Why this would print"); //this would print if there is no possible path to target. or it takes more than 10 steps.
+			quit |= count > 100; //this just prevents infinite loops from forming in strange circumstances. DOnt worry about it basically.
+			//if(count > 10) System.out.println("I cant Even Imagine Why this would print"); //this would print if there is no possible path to target. or it takes more than 1000 steps.
 			outside = temp;
 		}
 		
@@ -255,7 +260,11 @@ public class GameEngine {
 		player.reset();
 	}
 
+	/*
+	 * THis updates the player, enemies, and bolts fired. There is no multithreading and all the items and entities take their turns
+	 */
     private void updateGame(char input) throws PlayerDiedException{  //user input
+    	if(frameCount % 2 == 0) updateBolts();
     	player.updatePlayer(input);
     	displayPlayerInformation(player);
     	if(input != '0')
@@ -263,7 +272,52 @@ public class GameEngine {
     	for(Enemy enemy : enemies)
     		enemy.updateEnemy();
     	gameBoard.repaint();
+    	frameCount++;
 	}
+    private void updateBolts(){
+    	Point to;
+    	ArrayList<Bolt> boltsToRemove = new ArrayList<Bolt>();
+    	ArrayList<Enemy> enemiesToRemove = new ArrayList<Enemy>();
+    	for(Bolt b : bolts){
+    		to = (Point) b.getPoint().clone();
+    		if(b.direction == Direction.NORTH) to.y--;
+    		else if(b.direction == Direction.EAST) to.x++;
+    		else if(b.direction == Direction.SOUTH) to.y++;
+    		else if(b.direction == Direction.WEST) to.x--;
+    		
+    		if(canEntityTravel(b.getPoint(), b.direction)){
+    			b.move();
+    		}
+    		else if(isOccupied(to)){
+    			for(Enemy e: enemies){
+    				if(e.getPosition().equals(to)){
+    					e.health -= b.damage;
+    					if(e.health <= 0){
+    						enemiesToRemove.add(e);
+    						statusPanel.addMessage("Enemy: " + Responses.getEnemyKilledMsg());
+    						player.incrementScore(Player.ENEMY_KILLED_BONUS);
+    					}
+    					boltsToRemove.add(b);
+    				}
+    			}
+    			if(player.point.equals(to)){
+    				boltsToRemove.add(b);
+    				player.health -= b.damage;
+    			}
+    		}
+    		else{
+    			boltsToRemove.add(b);
+    		}
+    	}
+    	bolts.removeAll(boltsToRemove); //this avoids one of those weird errors.
+    	for(Enemy e : enemiesToRemove){
+    		enemies.remove(e);
+			gamePanel.removeEntity(e);
+    	}
+    }
+    public void addBolt(Bolt b){
+    	bolts.add(b);
+    }
 	private void displayPlayerInformation(Player player){
 		String output = "HP: ";
 		String health = String.valueOf(player.health);
@@ -430,6 +484,15 @@ public class GameEngine {
 		}
 		
 		return 	isPointInBounds(to) && tileMap[to.x][to.y].getAllowTravel() && !isOccupied(to);
+	}
+	/*
+	 * cant move into the same position as a bolt
+	 */
+	public boolean hasBolt(Point point){
+		boolean occupied = false;
+		for(int i = 0; i < bolts.size() && !occupied; i++)
+			occupied = point.equals(bolts.get(i).getPoint());
+		return occupied;
 	}
 	public boolean isOccupied(Point point){
 		boolean occupied = point.equals(player.getPosition());

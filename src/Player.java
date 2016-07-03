@@ -17,16 +17,17 @@ public class Player extends Entity{
 	}	
 	public void generateInventory(){
 		equipArmor(new Armor("MAIL"));
-		equipWeapon((Weapon) new MeleeWeapon("AXE"));
+		equipMeleeWeapon(new MeleeWeapon("AXE"));
+		equipRangedWeapon(new RangedWeapon("CROSSBOW"));
 		inventory.add(getEquippedArmor());
-		inventory.add(getEquippedWeapon());
+		inventory.add(getEquippedMeleeWeapon());
 	}
 	public void incrementScore(int s){
 		score += s;
 	}
 	public void updatePlayer(char input) throws PlayerDiedException{
-		Point temp = (Point) point.clone();
 		if("wasd".contains(String.valueOf(input))){
+			Point temp = (Point) point.clone();
 			
 			if(engine.random.nextInt(100) > 90 && !engine.statusPanel.hasMessage()) 
 				engine.statusPanel.addMessage(Responses.getRandomStatusMsg());
@@ -35,12 +36,13 @@ public class Player extends Entity{
 			else if(input == 'd'){temp.x++;}
 			else if(input == 's'){temp.y++;}
 			else if(input == 'a'){temp.x--;}
-			if(engine.canEntityTravel(point, input)){
+			if(engine.canEntityTravel(point, input) && !engine.hasBolt(temp)){
 				point.setLocation(temp);
 				if(hunger < 100)  hunger++;
 				if(hunger >= 100) health--;
 				engine.statusPanel.clear();
-			}else if(engine.isOccupied(temp))
+			}
+			else if(engine.isOccupied(temp))
 				if(attack(temp)){
 					incrementScore(Player.ENEMY_KILLED_BONUS);	//attack enemy at given location
 					kills++;
@@ -50,6 +52,7 @@ public class Player extends Entity{
 		else if(input == 'e') eatItem();
 		else if(input == 'q') quaffPotion();
 		else if(input == '\n') descendStairs();
+		else if("8645".contains(String.valueOf(input))) fireBolt(input);
 		
 		if(!isAlive()) throw new PlayerDiedException(this);
 	}
